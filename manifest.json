@@ -1,0 +1,15 @@
+{
+  "name": "Kasir Pro Premium",
+  "short_name": "KasirPro",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#4361ee",
+  "theme_color": "#4361ee",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2652/2652218.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
