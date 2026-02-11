@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasir Pro V2</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root { --p: #4361ee; --s: #3a0ca3; --acc: #4cc9f0; --danger: #f72585; --bg: #f8f9fa; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; color: #333; padding-bottom: 80px; }
+        .header { background: linear-gradient(135deg, var(--p), var(--s)); color: white; padding: 30px 20px; border-radius: 0 0 25px 25px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .container { max-width: 500px; margin: auto; padding: 0 15px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-top: -20px; }
+        .grid-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .stat-item { background: white; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #eee; }
+        .stat-item h4 { margin: 0; color: var(--p); font-size: 18px; }
+        .stat-item p { margin: 5px 0 0; font-size: 12px; color: #777; }
+        
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1.5px solid #eee; border-radius: 10px; font-size: 14px; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--p); box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1); }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .btn-p { background: var(--p); color: white; }
+        .btn-p:active { transform: scale(0.98); }
+        
+        .item-list { margin-top: 20px; }
+        .item-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--p); }
+        .item-info b { font-size: 16px; color: #222; }
+        .item-info p { margin: 3px 0 0; font-size: 13px; color: #666; }
+        .actions { display: flex; gap: 8px; }
+        .btn-sm { padding: 8px 12px; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .btn-sell { background: #e7f0ff; color: var(--p); }
+        .btn-del { background: #ffe5ed; color: var(--danger); }
+        
+        .nav-bot { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #eee; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+        .nav-item { text-align: center; font-size: 11px; color: #999; cursor: pointer; }
+        .nav-item.active { color: var(--p); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2 style="margin:0">KASIR PRO V2</h2>
+    <p style="opacity:0.8; font-size:14px">Sistem Manajemen Stok & Penjualan</p>
+</div>
+
+<div class="container">
+    <div class="grid-stats">
+        <div class="stat-item">
+            <h4 id="count-jenis">0</h4>
+            <p>Produk</p>
+        </div>
+        <div class="stat-item">
+            <h4 id="count-stok">0</h4>
+            <p>Total Unit</p>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px;">
+        <input type="text" id="nama" placeholder="Nama Barang">
+        <input type="number" id="harga" placeholder="Harga Jual (Rp)">
+        <input type="number" id="stok" placeholder="Jumlah Stok">
+        <button class="btn btn-p" onclick="tambah()">+ TAMBAH BARANG</button>
+    </div>
+
+    <div class="item-list" id="main-list">
+        </div>
+</div>
+
+<div class="nav-bot">
+    <div class="nav-item active">🏠<br>Stok</div>
+    <div class="nav-item" onclick="exportKeExcel()">📊<br>Laporan</div>
+    <div class="nav-item" onclick="Swal.fire('Info','Versi 2.0 Pro Offline','info')">⚙️<br>Opsi</div>
+</div>
+
+<script>
+    let db = JSON.parse(localStorage.getItem('kasir_v2_db')) || [];
+
+    function render() {
+        const list = document.getElementById('main-list');
+        list.innerHTML = '';
+        let totalStok = 0;
+
+        db.forEach((item, i) => {
+            totalStok += parseInt(item.stok);
+            list.innerHTML += `
+                <div class="item-card">
+                    <div class="item-info">
+                        <b>${item.nama}</b>
+                        <p>Rp ${parseInt(item.harga).toLocaleString()} | Stok: ${item.stok}</p>
+                    </div>
+                    <div class="actions">
+                        <button class="btn-sm btn-sell" onclick="jual(${i})">JUAL</button>
+                        <button class="btn-sm btn-del" onclick="hapus(${i})">🗑️</button>
+                    </div>
+                </div>`;
+        });
+
+        document.getElementById('count-jenis').innerText = db.length;
+        document.getElementById('count-stok').innerText = totalStok;
+        localStorage.setItem('kasir_v2_db', JSON.stringify(db));
+    }
+
+    function tambah() {
+        const nama = document.getElementById('nama').value;
+        const harga = document.getElementById('harga').value;
+        const stok = document.getElementById('stok').value;
+
+        if(!nama || !harga || !stok) return Swal.fire('Error', 'Lengkapi semua kolom!', 'error');
+
+        db.push({ nama, harga, stok: parseInt(stok) });
+        document.querySelectorAll('input').forEach(i => i.value = '');
+        render();
+        Swal.fire({ icon: 'success', title: 'Tersimpan', showConfirmButton: false, timer: 800 });
+    }
+
+    function jual(i) {
+        if(db[i].stok > 0) {
+            db[i].stok--;
+            render();
+            Swal.fire({ icon: 'success', title: 'Terjual!', toast: true, position: 'top-end', timer: 1000, showConfirmButton: false });
+        } else {
+            Swal.fire('Habis', 'Stok barang sudah 0', 'warning');
+        }
+    }
+
+    function hapus(i) {
+        Swal.fire({
+            title: 'Hapus?', text: "Data tidak bisa balik lagi", icon: 'warning',
+            showCancelButton: true, confirmButtonColor: '#f72585', confirmButtonText: 'Hapus Saja'
+        }).then((res) => { if(res.isConfirmed) { db.splice(i, 1); render(); } });
+    }
+
+    function exportKeExcel() {
+        if(db.length === 0) return Swal.fire('Kosong', 'Belum ada data untuk diexport', 'info');
+        const ws = XLSX.utils.json_to_sheet(db);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Stok Barang");
+        XLSX.writeFile(wb, "Laporan_Stok_Kasir.xlsx");
+    }
+
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+    render();
+</script>
+</body>
+</html>
