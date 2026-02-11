@@ -3,142 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kasir Pro V2</title>
+    <title>KASIR POS PRO</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --p: #4361ee; --s: #3a0ca3; --acc: #4cc9f0; --danger: #f72585; --bg: #f8f9fa; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; color: #333; padding-bottom: 80px; }
-        .header { background: linear-gradient(135deg, var(--p), var(--s)); color: white; padding: 30px 20px; border-radius: 0 0 25px 25px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .container { max-width: 500px; margin: auto; padding: 0 15px; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-top: -20px; }
-        .grid-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .stat-item { background: white; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #eee; }
-        .stat-item h4 { margin: 0; color: var(--p); font-size: 18px; }
-        .stat-item p { margin: 5px 0 0; font-size: 12px; color: #777; }
+        :root { --primary: #2563eb; --success: #22c55e; --danger: #ef4444; --gray: #64748b; --light: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background: var(--light); margin: 0; padding-bottom: 80px; color: #1e293b; }
         
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1.5px solid #eee; border-radius: 10px; font-size: 14px; outline: none; transition: 0.3s; }
-        input:focus { border-color: var(--p); box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1); }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-        .btn-p { background: var(--p); color: white; }
-        .btn-p:active { transform: scale(0.98); }
+        /* Header & Nav */
+        .header { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .tabs { display: flex; background: white; sticky: top; z-index: 10; border-bottom: 1px solid #e2e8f0; }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: 600; color: var(--gray); transition: 0.3s; }
+        .tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
+
+        .container { max-width: 600px; margin: auto; padding: 15px; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
         
-        .item-list { margin-top: 20px; }
-        .item-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--p); }
-        .item-info b { font-size: 16px; color: #222; }
-        .item-info p { margin: 3px 0 0; font-size: 13px; color: #666; }
-        .actions { display: flex; gap: 8px; }
-        .btn-sm { padding: 8px 12px; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; }
-        .btn-sell { background: #e7f0ff; color: var(--p); }
-        .btn-del { background: #ffe5ed; color: var(--danger); }
+        /* POS Grid */
+        .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .product-item { background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; transition: 0.2s; }
+        .product-item:active { transform: scale(0.95); }
+        .product-item b { display: block; font-size: 16px; margin-bottom: 5px; }
+        .product-item span { color: var(--primary); font-weight: bold; }
         
-        .nav-bot { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #eee; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-        .nav-item { text-align: center; font-size: 11px; color: #999; cursor: pointer; }
-        .nav-item.active { color: var(--p); font-weight: bold; }
+        /* Keranjang */
+        .cart-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        .total-box { font-size: 24px; font-weight: 800; text-align: right; margin: 20px 0; color: var(--primary); }
+        
+        /* Input & Button */
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; margin-top: 10px; }
+        
+        .hidden { display: none; }
+        .stok-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h2 style="margin:0">KASIR PRO V2</h2>
-    <p style="opacity:0.8; font-size:14px">Sistem Manajemen Stok & Penjualan</p>
+<div class="header">KASIR POS PRO v3.0</div>
+
+<div class="tabs">
+    <div class="tab active" id="tab1" onclick="showPage('kasir')">🛒 KASIR</div>
+    <div class="tab" id="tab2" onclick="showPage('stok')">📦 STOK</div>
 </div>
 
 <div class="container">
-    <div class="grid-stats">
-        <div class="stat-item">
-            <h4 id="count-jenis">0</h4>
-            <p>Produk</p>
-        </div>
-        <div class="stat-item">
-            <h4 id="count-stok">0</h4>
-            <p>Total Unit</p>
+    <div id="pageKasir">
+        <div class="product-grid" id="menuKasir"></div>
+        
+        <div class="card" style="margin-top: 20px;">
+            <h3 style="margin:0 0 10px">Pesanan</h3>
+            <div id="cartList"></div>
+            <div class="total-box">Rp <span id="textTotal">0</span></div>
+            <input type="number" id="inputBayar" placeholder="Uang Tunai (Rp)" onkeyup="updateKembalian()">
+            <div style="text-align: right; font-weight: bold; color: var(--danger);">
+                Kembalian: Rp <span id="textKembalian">0</span>
+            </div>
+            <button class="btn btn-success" onclick="selesaiTransaksi()">BAYAR & CETAK STRUK</button>
         </div>
     </div>
 
-    <div class="card" style="margin-top: 20px;">
-        <input type="text" id="nama" placeholder="Nama Barang">
-        <input type="number" id="harga" placeholder="Harga Jual (Rp)">
-        <input type="number" id="stok" placeholder="Jumlah Stok">
-        <button class="btn btn-p" onclick="tambah()">+ TAMBAH BARANG</button>
-    </div>
-
-    <div class="item-list" id="main-list">
+    <div id="pageStok" class="hidden">
+        <div class="card">
+            <h3>Input Master Barang</h3>
+            <input type="text" id="mNama" placeholder="Nama Barang">
+            <input type="number" id="mHarga" placeholder="Harga Jual">
+            <input type="number" id="mStok" placeholder="Jumlah Stok">
+            <button class="btn btn-primary" onclick="simpanKeDB()">TAMBAH KE GUDANG</button>
         </div>
-</div>
-
-<div class="nav-bot">
-    <div class="nav-item active">🏠<br>Stok</div>
-    <div class="nav-item" onclick="exportKeExcel()">📊<br>Laporan</div>
-    <div class="nav-item" onclick="Swal.fire('Info','Versi 2.0 Pro Offline','info')">⚙️<br>Opsi</div>
+        <div class="card">
+            <h3>Daftar Stok di Gudang</h3>
+            <div id="listStokDB"></div>
+        </div>
+    </div>
 </div>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('kasir_v2_db')) || [];
+    let db = JSON.parse(localStorage.getItem('kasir_db')) || [];
+    let cart = [];
 
-    function render() {
-        const list = document.getElementById('main-list');
-        list.innerHTML = '';
-        let totalStok = 0;
-
-        db.forEach((item, i) => {
-            totalStok += parseInt(item.stok);
-            list.innerHTML += `
-                <div class="item-card">
-                    <div class="item-info">
-                        <b>${item.nama}</b>
-                        <p>Rp ${parseInt(item.harga).toLocaleString()} | Stok: ${item.stok}</p>
-                    </div>
-                    <div class="actions">
-                        <button class="btn-sm btn-sell" onclick="jual(${i})">JUAL</button>
-                        <button class="btn-sm btn-del" onclick="hapus(${i})">🗑️</button>
-                    </div>
-                </div>`;
-        });
-
-        document.getElementById('count-jenis').innerText = db.length;
-        document.getElementById('count-stok').innerText = totalStok;
-        localStorage.setItem('kasir_v2_db', JSON.stringify(db));
-    }
-
-    function tambah() {
-        const nama = document.getElementById('nama').value;
-        const harga = document.getElementById('harga').value;
-        const stok = document.getElementById('stok').value;
-
-        if(!nama || !harga || !stok) return Swal.fire('Error', 'Lengkapi semua kolom!', 'error');
-
-        db.push({ nama, harga, stok: parseInt(stok) });
-        document.querySelectorAll('input').forEach(i => i.value = '');
+    function showPage(p) {
+        document.getElementById('pageKasir').classList.toggle('hidden', p !== 'kasir');
+        document.getElementById('pageStok').classList.toggle('hidden', p !== 'stok');
+        document.getElementById('tab1').classList.toggle('active', p === 'kasir');
+        document.getElementById('tab2').classList.toggle('active', p === 'stok');
         render();
-        Swal.fire({ icon: 'success', title: 'Tersimpan', showConfirmButton: false, timer: 800 });
     }
 
-    function jual(i) {
-        if(db[i].stok > 0) {
-            db[i].stok--;
+    function simpanKeDB() {
+        const nama = document.getElementById('mNama').value;
+        const harga = parseInt(document.getElementById('mHarga').value);
+        const stok = parseInt(document.getElementById('mStok').value);
+        
+        if(nama && harga && stok) {
+            db.push({ nama, harga, stok });
+            saveDB();
+            document.getElementById('mNama').value = '';
+            document.getElementById('mHarga').value = '';
+            document.getElementById('mStok').value = '';
+            Swal.fire('OK', 'Barang berhasil ditambah', 'success');
             render();
-            Swal.fire({ icon: 'success', title: 'Terjual!', toast: true, position: 'top-end', timer: 1000, showConfirmButton: false });
-        } else {
-            Swal.fire('Habis', 'Stok barang sudah 0', 'warning');
         }
     }
 
-    function hapus(i) {
-        Swal.fire({
-            title: 'Hapus?', text: "Data tidak bisa balik lagi", icon: 'warning',
-            showCancelButton: true, confirmButtonColor: '#f72585', confirmButtonText: 'Hapus Saja'
-        }).then((res) => { if(res.isConfirmed) { db.splice(i, 1); render(); } });
+    function addToCart(i) {
+        if(db[i].stok > 0) {
+            const inCart = cart.findIndex(c => c.nama === db[i].nama);
+            if(inCart > -1) { cart[inCart].qty++; } 
+            else { cart.push({ nama: db[i].nama, harga: db[i].harga, qty: 1, id: i }); }
+            db[i].stok--;
+            render();
+        } else {
+            Swal.fire('Habis', 'Stok sudah kosong', 'error');
+        }
     }
 
-    function exportKeExcel() {
-        if(db.length === 0) return Swal.fire('Kosong', 'Belum ada data untuk diexport', 'info');
-        const ws = XLSX.utils.json_to_sheet(db);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Stok Barang");
-        XLSX.writeFile(wb, "Laporan_Stok_Kasir.xlsx");
+    function render() {
+        // Render Menu Kasir
+        const menu = document.getElementById('menuKasir');
+        menu.innerHTML = '';
+        db.forEach((item, i) => {
+            menu.innerHTML += `
+                <div class="product-item" onclick="addToCart(${i})">
+                    <b>${item.nama}</b>
+                    <span>Rp ${item.harga.toLocaleString()}</span>
+                    <div style="font-size:11px; color:gray">Stok: ${item.stok}</div>
+                </div>`;
+        });
+
+        // Render Keranjang
+        const cartList = document.getElementById('cartList');
+        cartList.innerHTML = '';
+        let total = 0;
+        cart.forEach((item) => {
+            let sub = item.harga * item.qty;
+            total += sub;
+            cartList.innerHTML += `
+                <div class="cart-row">
+                    <span>${item.nama} x ${item.qty}</span>
+                    <span>Rp ${sub.toLocaleString()}</span>
+                </div>`;
+        });
+        document.getElementById('textTotal').innerText = total.toLocaleString();
+
+        // Render List Stok
+        const listStok = document.getElementById('listStokDB');
+        listStok.innerHTML = '';
+        db.forEach((item, i) => {
+            listStok.innerHTML += `
+                <div class="stok-list-item">
+                    <span><b>${item.nama}</b> (Stok: ${item.stok})</span>
+                    <button onclick="hapusDB(${i})" style="color:red; border:none; background:none">Hapus</button>
+                </div>`;
+        });
+        updateKembalian();
     }
+
+    function updateKembalian() {
+        const total = parseInt(document.getElementById('textTotal').innerText.replace(/,/g, '')) || 0;
+        const bayar = parseInt(document.getElementById('inputBayar').value) || 0;
+        document.getElementById('textKembalian').innerText = (bayar - total).toLocaleString();
+    }
+
+    function selesaiTransaksi() {
+        const total = parseInt(document.getElementById('textTotal').innerText.replace(/,/g, '')) || 0;
+        const bayar = parseInt(document.getElementById('inputBayar').value) || 0;
+        if(cart.length === 0) return;
+        if(bayar < total) return Swal.fire('Uang Kurang', '', 'warning');
+
+        Swal.fire('Transaksi Sukses', 'Struk telah diproses', 'success');
+        cart = [];
+        document.getElementById('inputBayar').value = '';
+        saveDB();
+        render();
+    }
+
+    function hapusDB(i) {
+        db.splice(i,1); saveDB(); render();
+    }
+
+    function saveDB() { localStorage.setItem('kasir_db', JSON.stringify(db)); }
 
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
     render();
